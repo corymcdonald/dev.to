@@ -1,6 +1,9 @@
 ENV["RAILS_ENV"] = "test"
+require "knapsack_pro"
+KnapsackPro::Adapters::RSpecAdapter.bind
 
 require "spec_helper"
+
 require File.expand_path("../config/environment", __dir__)
 require "rspec/rails"
 abort("The Rails environment is running in production mode!") if Rails.env.production?
@@ -49,6 +52,7 @@ allowed_sites = [
   "https://github.com/mozilla/geckodriver/releases",
   "https://selenium-release.storage.googleapis.com",
   "https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver",
+  "api.knapsackpro.com",
 ]
 WebMock.disable_net_connect!(allow_localhost: true, allow: allowed_sites)
 
@@ -77,6 +81,8 @@ RSpec.configure do |config|
   config.include SidekiqTestHelpers
   config.include ElasticsearchHelpers
 
+  config.include Warden::Test::Helpers
+
   config.before(:suite) do
     Search::Cluster.recreate_indexes
   end
@@ -84,6 +90,7 @@ RSpec.configure do |config|
   config.before do
     # Worker jobs shouldn't linger around between tests
     Sidekiq::Worker.clear_all
+    Warden.test_mode!
   end
 
   config.around(:each, elasticsearch_reset: true) do |example|
@@ -108,6 +115,7 @@ RSpec.configure do |config|
 
   config.after do
     SiteConfig.clear_cache
+    Warden.test_reset!
   end
 
   # Only turn on VCR if :vcr is included metadata keys
@@ -160,6 +168,19 @@ RSpec.configure do |config|
     allow(Percy).to receive(:snapshot)
   end
 
+  config.after do
+    Timecop.return
+  end
+
+  config.after(:suite) do
+    WebMock.disable_net_connect!(
+      allow_localhost: true,
+      allow: [
+        "api.knapsackpro.com",
+      ],
+    )
+  end
+
   OmniAuth.config.test_mode = true
   OmniAuth.config.logger = Rails.logger
 
@@ -181,4 +202,22 @@ RSpec.configure do |config|
   #   Faker::Config.random = prev_random_seed
   #   Timecop.return
   # end
+
+  class User
+    # Adding roles in specs often does not complete before we check the role
+    # this ensures that roles are finished being added before we continue with our spec
+    def add_role_synchronously(role_name, resource = nil)
+      attempts = 0
+      max_attempts = 100
+      result = add_role(role_name, resource)
+
+      attempts += 1 until roles.detect { |r| r.name == role_name.to_s } || attempts > max_attempts
+
+      if attempts > max_attempts
+        raise StandardError, "Adding role failed. role_name: #{role_name}, resource: #{resource}"
+      end
+
+      result
+    end
+  end
 end

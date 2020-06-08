@@ -5,10 +5,11 @@ require "webdrivers/chromedriver"
 Webdrivers.cache_time = 86_400
 
 Capybara.default_max_wait_time = 10
+Capybara.threadsafe = true
 
 Capybara.register_driver :headless_chrome do |app|
   options = Selenium::WebDriver::Chrome::Options.new(
-    args: %w[no-sandbox headless disable-gpu window-size=1920,1080 --enable-features=NetworkService,NetworkServiceInProcess],
+    args: %w[no-sandbox headless disable-gpu window-size=1920,1080 --enable-features=NetworkService,NetworkServiceInProcess allow-downloads=true],
     log_level: :error,
   )
 
@@ -18,6 +19,12 @@ end
 RSpec.configure do |config|
   config.before(:each, type: :system) do
     driven_by :rack_test
+  end
+
+  config.around(:each, raise_server_errors: false) do |example|
+    Capybara.raise_server_errors = false
+    example.run
+    Capybara.raise_server_errors = true
   end
 
   config.before(:each, type: :system, js: true) do
