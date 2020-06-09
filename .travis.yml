@@ -10,11 +10,11 @@ rvm:
 addons:
   postgresql: '9.6'
   chrome: 'stable'
-  artifacts:
-    paths:
-      - $(ls tmp/screenshots/*.png | tr "\n" ":")
-      - $(ls tmp/csvs/*.csv | tr "\n" ":")
-    debug: true
+  # artifacts:
+  #   paths:
+  #     - $(ls tmp/screenshots/*.png | tr "\n" ":")
+  #     - $(ls tmp/csvs/*.csv | tr "\n" ":")
+  #   debug: true
 services:
   - redis-server
 env:

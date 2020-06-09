@@ -39,6 +39,7 @@ class Internal::ApplicationController < ApplicationController
   end
 
   def authorize_admin
+    puts "authorize_admin #{authorization_resource}"
     authorize(authorization_resource, :access?, policy_class: InternalPolicy)
   end
 end
