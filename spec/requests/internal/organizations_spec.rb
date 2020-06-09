@@ -36,6 +36,7 @@ RSpec.describe "internal/organizations", type: :request do
     let(:organization) { create(:organization) }
 
     it "adds credits to an organization" do
+      puts "test"
       params = { credits: 1, credit_action: :add }
 
       expect do

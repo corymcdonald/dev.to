@@ -71,8 +71,8 @@ module Devise
     module IntegrationHelpers
       def sign_in(resource, scope: nil)
         scope ||= Devise::Mapping.find_scope!(resource)
-        puts("SIGN_IN user SCOPE: #{scope}")
         login_as(resource, scope: scope)
+        get "/"
       end
     end
   end
@@ -84,8 +84,7 @@ module Warden
       def login_as(user, opts = {})
         Warden.on_next_request do |proxy|
           opts[:event] ||= :authentication
-          puts("USER: #{user}")
-          puts("OPTS: #{opts}")
+          puts("USER: #{user} OPTS: #{opts}")
           proxy.set_user(user, opts)
         end
       end
@@ -125,6 +124,24 @@ module Warden
     end
   end
 end
+
+# module Warden
+#   module Hooks
+
+#     # Hook to _run_callbacks asserting for conditions.
+#     def _run_callbacks(kind, *args) #:nodoc:
+#       options = args.last # Last callback arg MUST be a Hash
+
+#       send("_#{kind}").each do |callback, conditions|
+#         invalid = conditions.find do |key, value|
+#           value.is_a?(Array) ? !value.include?(options[key]) : (value != options[key])
+#         end
+
+#         callback.call(*args) unless invalid
+#       end
+#     end
+#   end
+# end
 
 # module Pundit
 #   class << self

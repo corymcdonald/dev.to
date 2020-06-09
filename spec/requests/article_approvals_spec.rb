@@ -36,6 +36,7 @@ RSpec.describe "ArticleApprovals", type: :request do
       end
 
       it "does not allow update when multiple tags and none require approval" do
+        puts "test"
         second_tag = create(:tag, requires_approval: false)
         third_tag = create(:tag, requires_approval: false)
         article = create(:article, tags: [third_tag.name, second_tag.name])
